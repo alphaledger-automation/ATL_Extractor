@@ -1,0 +1,158 @@
+=============================================================
+  ATL EXTRACTOR  v2.0  —  ATL Status PDFs  ->  Excel
+=============================================================
+
+WHAT IT DOES
+------------
+  Reads a folder of FBR "ATL Status" verification PDFs and writes one
+  Excel file with the details from every slip:
+
+    Registration No | Length | Type (NTN/CNIC) | Name | Business Name |
+    Filing Status | Category | Filing Status Checking Date |
+    PDF File | Result | Note
+
+  It can then rename each PDF to its registration number, so the files
+  match the Excel rows.
+
+  Nothing is sent anywhere - the PDFs are read on your own machine.
+
+
+HOW TO RUN
+----------
+  Double-click   run.bat
+
+  First run only: the app checks what is missing and installs it by
+  itself (needs internet):
+    - Python packages (pdfplumber, openpyxl, customtkinter, pillow)
+  If Python itself is missing, run.bat installs it too.
+  After that the app opens straight away.
+
+
+HOW TO USE
+----------
+  Dashboard page (left sidebar)
+    1. PDF Folder        the "ATL Status" folder next to the app is
+                         picked up automatically. Browse ... to change.
+    2. Save Excel To     default: the folder above the PDFs
+    3. Excel File Name   default: ATL_Extract_<date>_<time>.xlsx
+    4. Start
+
+  Current Status page (left sidebar)
+    Read / Total counter and a live table of every PDF with its
+    Registration No, Name, Business Name, Filing Status, Checking Date
+    and Result.
+
+  Pause / Resume and Cancel work after the current file finishes.
+
+
+RENAMING THE PDFs
+-----------------
+  Bottom-right of the Dashboard, after a run has finished:
+
+    1. pick a name pattern
+         Registration No              0123456.pdf
+         Registration No + date       0123456_31-Dec-2023.pdf
+         Registration No + name       0123456_ALPHA TRADERS.pdf
+    2. Rename PDFs ...
+    3. a confirmation box shows how many files will change and an
+       example name - this changes files on disk, so read it first.
+
+  A file is left alone if it has no registration number, or if the new
+  name is already taken. The Excel file is rewritten afterwards so its
+  "PDF File" column matches what is on disk. Running it twice does
+  nothing the second time ("Already named").
+
+
+OUTPUT
+------
+  <output folder>\ATL_Extract_<date>_<time>.xlsx
+
+  Sheet "ATL Status"  one row per PDF, colour-coded by filing status,
+                      with a filter row and frozen headers.
+                      Registration numbers are stored as text, so
+                      leading zeros (0123456), letters (A123456) and
+                      13-digit CNICs stay intact.
+  Sheet "Summary"     counts per filing status, files found, files
+                      fully extracted, files that could not be read.
+
+  The file is written while the run is in progress, so it is always up
+  to date. Keep it closed in Excel during a run so it can be written.
+
+
+OPTIONS
+-------
+  Light / Dark                  switch at the bottom of the left
+                                sidebar; your choice is remembered
+  Skip files already extracted  on a second Start, only re-read the
+                                files that failed or were not reached
+  Open Excel when finished      open the file as soon as the run ends
+
+
+FILING STATUS
+-------------
+  The slip prints the status as free text. It is copied verbatim into
+  "Filing Status" and also bucketed into "Category" so the sheet can be
+  filtered:
+
+    Active                Active
+    Active (Late Filer)   Active (Late Filer)
+    In-Active             In-Active  (the surcharge note printed on the
+                          same line goes into the "Note" column)
+    No record exists      No record
+
+  "Active" and "Active (Late Filer)" are counted separately - a late
+  filer is on the ATL but was not filed on time.
+
+
+COMMAND LINE (optional)
+-----------------------
+  run.bat --cli "C:\path\to\ATL Status" ["C:\output\folder"]
+      extract and write the Excel file without opening the window
+
+  run.bat --setup-only
+      install / verify the Python packages, then exit
+
+
+TROUBLESHOOTING
+---------------
+  "Failed - No /Root object! - Is this really a PDF?"
+      The file is not a readable PDF (truncated or renamed). Open it in
+      a PDF viewer to check.
+
+  "Failed - no text in PDF (scanned image?)"
+      The PDF has no text layer - it is a scan or a screenshot. This
+      app reads text only; such a file has to be re-downloaded from
+      IRIS.
+
+  "Not an ATL slip"
+      The PDF is readable but has no "Registration No" line, so it is
+      not an ATL verification slip.
+
+  "Extracted (incomplete)"
+      Some of the three key fields (Registration No / Filing Status /
+      Checking Date) were missing. The row still holds whatever was
+      found; the activity log names what was missing.
+
+  "Could not write the Excel file (is it open in Excel?)"
+      Close the file in Excel - the next save will go through.
+
+  Setup problems
+      See  %LocalAppData%\ATL_Extractor\setup.log
+
+
+FILES
+-----
+  run.bat            start here
+  main.py            entry point (checks/installs dependencies, --cli)
+  bootstrap.py       dependency check + installer
+  gui.py             Dashboard / Current Status window
+  pdf_engine.py      extraction + renaming jobs (background thread)
+  pdf_reader.py      lists the PDFs and parses the slip text
+  report_writer.py   writes the Excel file
+  constants.py       settings (labels, patterns, palette)
+  requirements.txt   Python packages
+  Assets\            icons
+
+=============================================================
+  Alpha Ledger Automation
+=============================================================
